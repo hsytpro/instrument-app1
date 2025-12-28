@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ساز آنلاین — پیانو / گیتار</title>
+
+  <!-- ✅ PWA -->
+  <meta name="theme-color" content="#0b1020">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <style>
+    :root{
+      --white-w: 34px;
+      --white-h: 260px;
+      --black-w: 22px;
+      --black-h: 165px;
+      --gap: 2px;
+      --radius: 10px;
+      --ui-bg: rgba(255,255,255,.06);
+      --ui-bd: rgba(255,255,255,.12);
+      --ui-soft: rgba(255,255,255,.08);
+      --ui-soft-bd: rgba(255,255,255,.14);
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#0b1020;
+      color:#e8ecff;
+    }
+    .wrap{ max-width: 1480px; margin: 0 auto; padding: 12px; }
+
+    .bar{
+      position: sticky; top: 0; z-index: 20;
+      display:flex; gap:10px; flex-wrap: wrap;
+      align-items:center; justify-content: space-between;
+      background: var(--ui-bg);
+      border: 1px solid var(--ui-bd);
+      border-radius: 16px;
+      padding: 10px 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .title{ display:flex; align-items:baseline; gap:10px; white-space: nowrap; }
+    .title h1{ font-size: 15px; margin:0; font-weight: 900; letter-spacing: .2px; }
+    .title .sub{ font-size: 12px; opacity: .85; }
+
+    .tabs{ display:flex; gap:8px; align-items:center; }
+    .tabs button{ padding: 8px 12px; border-radius: 12px; }
+    .tabs button.active{
+      background: rgba(120,160,255,.22);
+      border-color: rgba(120,160,255,.35);
+    }
+
+    .controls{ display:flex; gap:8px; flex-wrap: wrap; align-items:center; justify-content: flex-end; }
+    button, select, input{ font: inherit; }
+    button{
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 10px;
+      user-select: none;
+      white-space: nowrap;
+    }
+    button:active{ transform: translateY(1px); }
+    button.on{ background: rgba(120,160,255,.22); border-color: rgba(120,160,255,.35); }
+    button.danger{ background: rgba(255,90,120,.18); border-color: rgba(255,90,120,.28); }
+
+    label{
+      display:flex; align-items:center; gap:8px;
+      background: var(--ui-soft);
+      border: 1px solid var(--ui-soft-bd);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    input[type="range"]{ width: 140px; }
+
+    .meta{
+      margin-top: 10px;
+      display:flex; gap:10px; flex-wrap: wrap;
+      align-items:center; justify-content: space-between;
+      opacity:.92; font-size: 13px;
+    }
+    .pill{
+      background: var(--ui-soft);
+      border: 1px solid var(--ui-soft-bd);
+      padding: 7px 10px;
+      border-radius: 999px;
+      line-height: 1.7;
+    }
+    .pill code{
+      background: rgba(0,0,0,.28);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.12);
+      color: #fff;
+    }
+    .status{ margin-top: 8px; font-size: 13px; opacity: 0.92; line-height: 1.7; }
+
+    .panel{ display:none; }
+    .panel.active{ display:block; }
+
+    /* ---------------- Piano ---------------- */
+    .piano-area{ margin-top: 12px; overflow-x: auto; padding: 10px 0 14px; }
+
+    .piano{
+      position: relative;
+      display: inline-block;
+      padding: 12px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      user-select: none;
+      outline: none;
+      touch-action: none;
+    }
+    .white-keys{ display:flex; gap: var(--gap); }
+    .key{ position: relative; display:flex; align-items:flex-end; justify-content:center; touch-action: none; }
+    .white{
+      width: var(--white-w);
+      height: var(--white-h);
+      background: linear-gradient(#ffffff, #e9ecff);
+      border: 1px solid rgba(0,0,0,.25);
+      border-radius: 0 0 var(--radius) var(--radius);
+      color: #111;
+      z-index: 1;
+    }
+    .black{
+      position:absolute;
+      width: var(--black-w);
+      height: var(--black-h);
+      background: linear-gradient(#1a1a1a, #000);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 0 0 8px 8px;
+      top: 12px;
+      z-index: 3;
+      color: #fff;
+    }
+    .legend{
+      font-size: 10px;
+      padding: 6px 4px 8px;
+      opacity: .92;
+      pointer-events:none;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .legend .k{ display:block; font-size: 9px; opacity: .75; margin-top: 2px; }
+    .white.active{ background: linear-gradient(#cfe0ff, #a9c3ff); }
+    .black.active{ background: linear-gradient(#3a4a86, #16224b); }
+
+    /* ✅ Fix RTL reversing the piano layout */
+    #panelPiano, #pianoArea, #piano, .white-keys { direction: ltr; }
+    #pianoArea { text-align: left; }
+    .legend { direction: ltr; }
+
+    /* ---------------- Guitar ---------------- */
+    .guitar-wrap{
+      margin-top: 12px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+      overflow-x: auto;
+    }
+    .guitar{ min-width: 1040px; user-select: none; }
+
+    .g-top{
+      display:flex; gap:10px; flex-wrap: wrap;
+      align-items:flex-start; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .g-left{ max-width: 800px; }
+    .g-hint{ font-size: 12px; opacity: .85; line-height: 1.7; margin-bottom: 8px; }
+
+    .chords{
+      display:flex; flex-wrap: wrap; gap:8px;
+      margin-top: 6px;
+    }
+    .chords button{ padding: 7px 10px; border-radius: 999px; }
+    .chords button.active{
+      background: rgba(120,160,255,.22);
+      border-color: rgba(120,160,255,.35);
+    }
+
+    .g-right{
+      display:flex; gap:8px; flex-wrap: wrap; align-items:center; justify-content:flex-end;
+    }
+
+    .fretboard{
+      display:grid;
+      grid-template-columns: 64px repeat(13, 1fr);
+      gap: 6px;
+    }
+    .cell{
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor: pointer;
+      color:#fff;
+      font-size: 12px;
+      position: relative;
+      overflow:hidden;
+    }
+    .cell.open{ background: rgba(255,255,255,.10); font-weight: 700; }
+    .cell.selected{ background: rgba(120,160,255,.22); border-color: rgba(120,160,255,.35); }
+    .cell.active{ background: rgba(120,160,255,.35); border-color: rgba(120,160,255,.55); }
+    .stringTag{
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .stringTag.muted{
+      background: rgba(255,90,120,.18);
+      border-color: rgba(255,90,120,.28);
+    }
+    .small{
+      font-size: 10px; opacity: .8;
+      position:absolute; bottom:5px; left:7px; direction:ltr;
+    }
+
+    @media (max-width: 560px){
+      input[type="range"]{ width: 110px; }
+      .title .sub{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="bar">
+      <div class="title">
+        <h1>🎵 ساز آنلاین</h1>
+        <div class="sub">پیانو / گیتار • ریتم خف برای گیتار</div>
+      </div>
+
+      <div class="tabs">
+        <button id="tabPiano" class="active">پیانو</button>
+        <button id="tabGuitar">گیتار</button>
+      </div>
+
+      <div class="controls">
+        <button id="btnStart">فعال‌سازی صدا</button>
+
+        <label>ولوم
+          <input id="vol" type="range" min="0" max="1" step="0.01" value="0.85">
+        </label>
+
+        <label>زوم
+          <input id="zoom" type="range" min="0.55" max="1.6" step="0.01" value="1">
+        </label>
+
+        <label>اکتاو کیبورد
+          <select id="oct">
+            <option value="1">C1</option>
+            <option value="2">C2</option>
+            <option value="3">C3</option>
+            <option value="4" selected>C4</option>
+            <option value="5">C5</option>
+            <option value="6">C6</option>
+          </select>
+        </label>
+
+        <label>Transpose
+          <select id="transpose"></select>
+        </label>
+
+        <button id="btnSustain">Sustain</button>
+
+        <label>BPM
+          <input id="bpm" type="range" min="40" max="220" step="1" value="100">
+        </label>
+
+        <button id="btnLabels" class="on">نام نت</button>
+        <button id="btnKeyLabels" class="on">کلیدها</button>
+
+        <button id="btnInstall">Install</button>
+
+        <button id="btnFullscreen">Fullscreen</button>
+        <button id="btnPanic" class="danger">Panic</button>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div class="pill">
+        پیانو: <code>Z S X D C V G B H N J M</code> + <code>Q 2 W 3 E R 5 T 6 Y 7 U</code> —
+        <code>[</code>/<code>]</code> اکتاو — Space ساس‌تین
+        <span style="opacity:.85;"> | گیتار: <code>1..6</code> نواختن سیم‌ها • کلیک روی فرت‌ها • Rhythm = ریتم خودکار</span>
+      </div>
+      <div class="pill" id="pillInfo">Samples: 0 cached</div>
+    </div>
+
+    <div class="status" id="status">
+      وضعیت: اول «فعال‌سازی صدا» را بزن.
+    </div>
+
+    <!-- Piano panel -->
+    <div id="panelPiano" class="panel active">
+      <div class="piano-area" id="pianoArea">
+        <div class="piano" id="piano" tabindex="0" aria-label="Online Piano"></div>
+      </div>
+    </div>
+
+    <!-- Guitar panel -->
+    <div id="panelGuitar" class="panel">
+      <div class="guitar-wrap">
+        <div class="guitar" id="guitar">
+          <div class="g-top">
+            <div class="g-left">
+              <div class="g-hint">
+                • آکورد انتخاب کن یا فرت‌ها رو دستی تنظیم کن، بعد <b>Rhythm</b> رو روشن کن.<br>
+                • Pattern: <b>D . U U . U D</b> (روی نقطه‌ها "خف" می‌زنه)
+              </div>
+
+              <div class="chords" id="chordButtons"></div>
+            </div>
+
+            <div class="g-right">
+              <label>نوع گیتار
+                <select id="guitarInstr"></select>
+              </label>
+
+              <label>Capo
+                <select id="capo"></select>
+              </label>
+
+              <button id="btnStrum">Strum ↓</button>
+              <button id="btnStrumUp">Strum ↑</button>
+
+              <label>Strum Speed
+                <input id="strumSpeed" type="range" min="10" max="140" step="1" value="28">
+              </label>
+
+              <button id="btnClearChord">Clear</button>
+
+              <label>TimeSig
+                <select id="timeSig">
+                  <option value="4/4" selected>4/4</option>
+                  <option value="3/4">3/4</option>
+                  <option value="6/8">6/8</option>
+                </select>
+              </label>
+
+              <button id="btnRhythm">Rhythm</button>
+
+              <label>Humanize
+                <input id="humanize" type="range" min="0" max="25" step="1" value="6">
+              </label>
+
+              <label>Pattern
+                <select id="rhythmPattern"></select>
+              </label>
+            </div>
+          </div>
+
+          <div class="fretboard" id="fretboard"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // ✅ Register service worker (PWA offline shell)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    });
+  }
+
+  // ✅ Install prompt button
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $("btnInstall").style.display = "inline-block";
+  });
+  $("btnInstall").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch {}
+    deferredPrompt = null;
+  });
+  $("btnInstall").style.display = "none";
+
+  const SAMPLE_BASE = "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/";
+  const INSTR_PIANO = "acoustic_grand_piano";
+
+  const GUITAR_INSTRUMENTS = [
+    ["Nylon (Acoustic)", "acoustic_guitar_nylon"],
+    ["Steel (Acoustic)", "acoustic_guitar_steel"],
+    ["Electric Clean", "electric_guitar_clean"],
+    ["Electric Jazz", "electric_guitar_jazz"],
+    ["Overdrive", "overdriven_guitar"],
+    ["Distortion", "distortion_guitar"],
+  ];
+
+  const folderFor = (instr) => `${instr}-mp3/`;
+
+  const MIDI_MIN = 21;  // A0
+  const MIDI_MAX = 108; // C8
+
+  const PC_SHARP   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const PC_SHARP_S = ["C","Cs","D","Ds","E","F","Fs","G","Gs","A","As","B"];
+  const PC_FLAT    = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+
+  const midiToOct   = (m) => Math.floor(m / 12) - 1;
+  const midiToLabel = (m) => `${PC_SHARP[m % 12].replace("#","♯")}${midiToOct(m)}`;
+  function noteNameCandidates(midi){
+    const oct = midiToOct(midi);
+    const i = midi % 12;
+    return [`${PC_SHARP_S[i]}${oct}`, `${PC_SHARP[i]}${oct}`, `${PC_FLAT[i]}${oct}`];
+  }
+
+  let ac = null;
+  let master = null;
+  let convolver = null;
+  let dry = null;
+  let wet = null;
+  let noiseBuf = null;
+
+  const bufferCache = new Map();
+  const inFlight = new Map();
+  const urlByInstrMidi = new Map();
+
+  let showNoteLabels = true;
+  let showKeyLabels  = true;
+  let transpose = 0;
+  let currentTab = "piano";
+  let sustain = false;
+
+  function setStatus(txt){ $("status").textContent = "وضعیت: " + txt; }
+  function updateInfo(){
+    $("pillInfo").textContent =
+      `Samples: ${bufferCache.size} cached • Oct: ${$("oct").value} • Transpose: ${transpose} • Tab: ${currentTab}`;
+  }
+
+  function makeImpulse(ctx, seconds, decay){
+    const rate = ctx.sampleRate;
+    const length = Math.floor(rate * seconds);
+    const impulse = ctx.createBuffer(2, length, rate);
+    for (let ch=0; ch<2; ch++){
+      const data = impulse.getChannelData(ch);
+      for (let i=0; i<length; i++){
+        const t = i / length;
+        data[i] = (Math.random()*2 - 1) * Math.pow(1 - t, decay);
+      }
+    }
+    return impulse;
+  }
+  function makeNoiseBuffer(ctx, seconds){
+    const rate = ctx.sampleRate;
+    const length = Math.floor(rate * seconds);
+    const b = ctx.createBuffer(1, length, rate);
+    const d = b.getChannelData(0);
+    for (let i=0;i<length;i++) d[i] = Math.random()*2 - 1;
+    return b;
+  }
+  function ensureAudio(){
+    if (ac) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+
+    master = ac.createGain();
+    master.gain.value = parseFloat($("vol").value);
+
+    dry = ac.createGain();
+    wet = ac.createGain();
+    dry.gain.value = 1.0;
+    wet.gain.value = 0.25;
+
+    convolver = ac.createConvolver();
+    convolver.buffer = makeImpulse(ac, 1.2, 2.2);
+
+    wet.connect(convolver);
+    convolver.connect(master);
+    dry.connect(master);
+    master.connect(ac.destination);
+
+    noiseBuf = makeNoiseBuffer(ac, 1.0);
+  }
+  function routeVoice(gainNode){
+    gainNode.connect(dry);
+    gainNode.connect(wet);
+  }
+
+  async function fetchArrayBuffer(url){
+    const res = await fetch(url, { cache: "force-cache" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.arrayBuffer();
+  }
+  async function loadBufferByUrl(urlOrDataUrl){
+    if (bufferCache.has(urlOrDataUrl)) return bufferCache.get(urlOrDataUrl);
+    if (inFlight.has(urlOrDataUrl)) return await inFlight.get(urlOrDataUrl);
+
+    const p = (async () => {
+      let ab;
+      if (String(urlOrDataUrl).startsWith("data:audio")){
+        const res = await fetch(urlOrDataUrl);
+        ab = await res.arrayBuffer();
+      } else {
+        ab = await fetchArrayBuffer(urlOrDataUrl);
+      }
+      const buf = await ac.decodeAudioData(ab);
+      bufferCache.set(urlOrDataUrl, buf);
+      return buf;
+    })();
+
+    inFlight.set(urlOrDataUrl, p);
+    try{
+      const buf = await p;
+      inFlight.delete(urlOrDataUrl);
+      updateInfo();
+      return buf;
+    } catch(e){
+      inFlight.delete(urlOrDataUrl);
+      throw e;
+    }
+  }
+
+  const soundfontJSCache = new Map();
+  async function loadSoundfontJS(instr){
+    if (soundfontJSCache.has(instr)) return await soundfontJSCache.get(instr);
+    const p = (async () => {
+      const url = `${SAMPLE_BASE}${instr}-mp3.js`;
+      const res = await fetch(url, { cache: "force-cache" });
+      if (!res.ok) throw new Error(`Soundfont JS not found: ${instr}`);
+      const txt = await res.text();
+      const MIDI = { Soundfont: {} };
+      const getSoundfont = new Function("MIDI", txt + "\nreturn MIDI.Soundfont;");
+      const sf = getSoundfont(MIDI);
+      const map = sf[instr];
+      if (!map) throw new Error(`Soundfont map missing for: ${instr}`);
+      return map;
+    })();
+    soundfontJSCache.set(instr, p);
+    return await p;
+  }
+  function isGuitarInstr(instr){
+    return GUITAR_INSTRUMENTS.some(([,v]) => v === instr);
+  }
+  async function loadBufferForInstrMidi(instr, midi){
+    const key = `${instr}|${midi}`;
+    if (urlByInstrMidi.has(key)){
+      return await loadBufferByUrl(urlByInstrMidi.get(key));
+    }
+    if (isGuitarInstr(instr)){
+      const sf = await loadSoundfontJS(instr);
+      const candidates = noteNameCandidates(midi);
+      for (const note of candidates){
+        const n1 = note.replace("#","s");
+        const dataUrl = sf[n1] || sf[note];
+        if (dataUrl){
+          urlByInstrMidi.set(key, dataUrl);
+          return await loadBufferByUrl(dataUrl);
+        }
+      }
+      throw new Error("No soundfont entry for this note.");
+    }
+    const folder = folderFor(instr);
+    const candidates = noteNameCandidates(midi);
+    let lastErr = null;
+    for (const note of candidates){
+      const url = `${SAMPLE_BASE}${folder}${encodeURIComponent(note)}.mp3`;
+      try{
+        const buf = await loadBufferByUrl(url);
+        urlByInstrMidi.set(key, url);
+        return buf;
+      } catch(e){
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error("Failed to load sample.");
+  }
+
+  function playChuck(t, intensity=0.95){
+    if (!ac || !noiseBuf) return;
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuf;
+
+    const bp = ac.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(1650, t);
+    bp.Q.setValueAtTime(8, t);
+
+    const hp = ac.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(380, t);
+
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.42 * intensity, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+
+    src.connect(bp);
+    bp.connect(hp);
+    hp.connect(g);
+    g.connect(master);
+
+    src.start(t);
+    src.stop(t + 0.08);
+  }
+
+  async function startVoiceAt(instr, midiRaw, t, vel=0.9, fixedDurMs=240){
+    if (!ac) return;
+    let midi = midiRaw;
+    if (instr === INSTR_PIANO) midi = midiRaw + transpose;
+    if (midi < MIDI_MIN || midi > MIDI_MAX) return;
+
+    const buf = await loadBufferForInstrMidi(instr, midi);
+
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(Math.max(0.0001, vel), t + 0.008);
+
+    src.connect(g);
+    routeVoice(g);
+
+    src.start(t);
+
+    const stopT = t + Math.max(0.04, fixedDurMs / 1000);
+    g.gain.setValueAtTime(g.gain.value, stopT);
+    g.gain.linearRampToValueAtTime(0.0001, stopT + 0.08);
+    try{ src.stop(stopT + 0.10); } catch {}
+  }
+
+  // ---------------------------
+  // Piano UI (visual only, sound via pointer)
+  // ---------------------------
+  const pianoEl = $("piano");
+  const whiteRow = document.createElement("div");
+  whiteRow.className = "white-keys";
+  pianoEl.appendChild(whiteRow);
+
+  const pianoMidiToEl = new Map();
+  const pianoBlackMeta = [];
+  let pianoWhiteIndex = 0;
+
+  for (let midi = MIDI_MIN; midi <= MIDI_MAX; midi++){
+    if (!PC_SHARP[midi % 12].includes("#")){
+      const w = document.createElement("div");
+      w.className = "key white";
+      w.dataset.midi = String(midi);
+      w.innerHTML = `<div class="legend"></div>`;
+      whiteRow.appendChild(w);
+      pianoMidiToEl.set(midi, w);
+
+      const next = midi + 1;
+      if (next <= MIDI_MAX && PC_SHARP[next % 12].includes("#")){
+        const b = document.createElement("div");
+        b.className = "key black";
+        b.dataset.midi = String(next);
+        b.innerHTML = `<div class="legend"></div>`;
+        pianoEl.appendChild(b);
+        pianoMidiToEl.set(next, b);
+        pianoBlackMeta.push({ el: b, whiteIndex: pianoWhiteIndex });
+      }
+      pianoWhiteIndex++;
+    }
+  }
+
+  function layoutPianoBlacks(){
+    const firstWhite = whiteRow.querySelector(".white");
+    if (!firstWhite) return;
+    const whiteW = firstWhite.getBoundingClientRect().width;
+    const gap = parseFloat(getComputedStyle(whiteRow).gap) || 0;
+    const pad = 12;
+    for (const {el, whiteIndex} of pianoBlackMeta){
+      const blackW = el.getBoundingClientRect().width;
+      const x = pad + (whiteIndex * (whiteW + gap)) + (whiteW - blackW / 2);
+      el.style.left = `${x}px`;
+    }
+  }
+  window.addEventListener("resize", layoutPianoBlacks);
+
+  function baseMidiFromOct(){
+    const oct = parseInt($("oct").value, 10);
+    return (oct + 1) * 12; // C4=60
+  }
+  const KEYMAP_PIANO = new Map([
+    ["z",0],["s",1],["x",2],["d",3],["c",4],["v",5],["g",6],["b",7],["h",8],["n",9],["j",10],["m",11],
+    ["q",12],["2",13],["w",14],["3",15],["e",16],["r",17],["5",18],["t",19],["6",20],["y",21],["7",22],["u",23],
+  ]);
+  const pressedKeys = new Set();
+
+  function buildKeyReverseMap(){
+    const reverse = new Map();
+    const base = baseMidiFromOct();
+    for (const [k, semi] of KEYMAP_PIANO.entries()){
+      const m = base + semi;
+      if (m >= MIDI_MIN && m <= MIDI_MAX) reverse.set(m, k.toUpperCase());
+    }
+    return reverse;
+  }
+  function refreshPianoLegends(){
+    const reverse = buildKeyReverseMap();
+    for (let midi = MIDI_MIN; midi <= MIDI_MAX; midi++){
+      const el = pianoMidiToEl.get(midi);
+      if (!el) continue;
+      const noteTxt = showNoteLabels ? midiToLabel(midi) : "";
+      const keyTxt  = showKeyLabels  ? (reverse.get(midi) || "") : "";
+      if (noteTxt && keyTxt){
+        el.querySelector(".legend").innerHTML = `${noteTxt}<span class="k">${keyTxt}</span>`;
+      } else if (noteTxt){
+        el.querySelector(".legend").textContent = noteTxt;
+      } else if (keyTxt){
+        el.querySelector(".legend").innerHTML = `<span class="k">${keyTxt}</span>`;
+      } else {
+        el.querySelector(".legend").textContent = "";
+      }
+    }
+  }
+  function scrollToKeyboardOct(){
+    const cMidi = baseMidiFromOct();
+    const el = pianoMidiToEl.get(cMidi);
+    if (!el) return;
+    const area = $("pianoArea");
+    const r = el.getBoundingClientRect();
+    const ar = area.getBoundingClientRect();
+    const dx = (r.left + r.right)/2 - (ar.left + ar.right)/2;
+    area.scrollLeft += dx;
+  }
+
+  let lastPianoKey = null;
+  pianoEl.addEventListener("pointerdown", async (e) => {
+    const keyEl = e.target.closest(".key");
+    if (!keyEl || !ac) return;
+    currentTab = "piano";
+    const midi = parseInt(keyEl.dataset.midi, 10);
+    startVoiceAt(INSTR_PIANO, midi, ac.currentTime, 0.92, 800).catch(()=>{});
+    keyEl.classList.add("active");
+    lastPianoKey = keyEl;
+  });
+  pianoEl.addEventListener("pointerup", () => {
+    if (lastPianoKey) lastPianoKey.classList.remove("active");
+    lastPianoKey = null;
+  });
+
+  // ---------------------------
+  // Guitar + Rhythm
+  // ---------------------------
+  const fretboardEl = $("fretboard");
+  const strings = [
+    { name: "E2", midi: 40 },
+    { name: "A2", midi: 45 },
+    { name: "D3", midi: 50 },
+    { name: "G3", midi: 55 },
+    { name: "B3", midi: 59 },
+    { name: "E4", midi: 64 },
+  ];
+  const FRETS = 12;
+
+  let capo = 0;
+  const selectedFret = Array(strings.length).fill(0);
+  let guitarInstr = GUITAR_INSTRUMENTS[0][1];
+
+  const CHORDS = [
+    ["C",  [-1, 3, 2, 0, 1, 0]],
+    ["G",  [ 3, 2, 0, 0, 0, 3]],
+    ["D",  [-1,-1, 0, 2, 3, 2]],
+    ["A",  [-1, 0, 2, 2, 2, 0]],
+    ["E",  [ 0, 2, 2, 1, 0, 0]],
+    ["Am", [-1, 0, 2, 2, 1, 0]],
+    ["Em", [ 0, 2, 2, 0, 0, 0]],
+    ["Dm", [-1,-1, 0, 2, 3, 1]],
+    ["F",  [ 1, 3, 3, 2, 1, 1]],
+    ["B7", [-1, 2, 1, 2, 0, 2]],
+  ];
+
+  const RHYTHM_PATTERNS = [
+    ["D . U U . U D (خف)", {
+      "4/4": ["D",".","U","U",".","U","D","."],
+      "3/4": ["D",".","U","U",".","U"],
+      "6/8": ["D",".","U","U",".","U"],
+    }],
+    ["Pop 4/4 (DDU UDU)", {
+      "4/4": ["D",".","D","U","U",".","D","U"],
+      "3/4": ["D",".","D",".","U","."],
+      "6/8": ["D",".",".","D","U","U"],
+    }],
+    ["Simple (D D D D)", {
+      "4/4": ["D",".","D",".","D",".","D","."],
+      "3/4": ["D",".","D",".","D","."],
+      "6/8": ["D",".","D",".","D","."],
+    }],
+    ["6/8 Groove", {
+      "4/4": ["D",".","D","U","U",".","D","U"],
+      "3/4": ["D",".","D",".","U","."],
+      "6/8": ["D",".","U","D","U","U"],
+    }],
+  ];
+
+  const giSel = $("guitarInstr");
+  GUITAR_INSTRUMENTS.forEach(([label, val], idx) => {
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = label;
+    if (idx === 0) opt.selected = true;
+    giSel.appendChild(opt);
+  });
+
+  const capoSel = $("capo");
+  for (let i=0;i<=12;i++){
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = String(i);
+    if (i===0) opt.selected = true;
+    capoSel.appendChild(opt);
+  }
+
+  const chordButtonsEl = $("chordButtons");
+  let activeChordName = null;
+  function renderChordButtons(){
+    chordButtonsEl.innerHTML = "";
+    CHORDS.forEach(([name]) => {
+      const b = document.createElement("button");
+      b.textContent = name;
+      b.classList.toggle("active", name === activeChordName);
+      b.addEventListener("click", () => setChord(name));
+      chordButtonsEl.appendChild(b);
+    });
+  }
+  function setChord(name){
+    const chord = CHORDS.find(c => c[0] === name);
+    if (!chord) return;
+    activeChordName = name;
+    const frets = chord[1];
+    for (let si=0; si<6; si++) selectedFret[si] = frets[si];
+    renderChordButtons();
+    buildFretboard();
+    setStatus(`آکورد انتخاب شد: ${name}`);
+  }
+
+  function buildFretboard(){
+    fretboardEl.innerHTML = "";
+    strings.forEach((s, si) => {
+      const tag = document.createElement("div");
+      tag.className = "cell stringTag";
+      tag.dataset.si = String(si);
+      const isMuted = selectedFret[si] === -1;
+      tag.classList.toggle("muted", isMuted);
+      tag.textContent = (6 - si) + "سیم" + (isMuted ? " (Mute)" : "");
+      fretboardEl.appendChild(tag);
+
+      for (let f=0; f<=FRETS; f++){
+        const cell = document.createElement("div");
+        cell.className = "cell" + (f===0 ? " open" : "");
+        cell.dataset.si = String(si);
+        cell.dataset.fret = String(f);
+
+        const midi = s.midi + capo + f;
+        const label = (f===0) ? "0" : String(f);
+        cell.innerHTML = `${label}<span class="small">${midiToLabel(midi)}</span>`;
+
+        if (selectedFret[si] !== -1 && selectedFret[si] === f){
+          cell.classList.add("selected");
+        }
+        fretboardEl.appendChild(cell);
+      }
+    });
+  }
+
+  function strumOrder(down=true){
+    return down ? [0,1,2,3,4,5] : [5,4,3,2,1,0];
+  }
+
+  async function manualStrum(down=true){
+    if (!ac) return;
+    const order = strumOrder(down);
+    const delayMs = parseInt($("strumSpeed").value, 10) || 28;
+
+    const baseT = ac.currentTime;
+    for (let i=0;i<order.length;i++){
+      const si = order[i];
+      const f = selectedFret[si];
+      if (f === -1) continue;
+      const midi = strings[si].midi + capo + f;
+      loadBufferForInstrMidi(guitarInstr, midi).catch(()=>{});
+      startVoiceAt(guitarInstr, midi, baseT + (i * delayMs/1000), 0.95, 240).catch(()=>{});
+    }
+  }
+
+  async function pluckString(si, vel=0.95){
+    if (!ac) return;
+    const f = selectedFret[si];
+    if (f === -1) return;
+    const midi = strings[si].midi + capo + f;
+    loadBufferForInstrMidi(guitarInstr, midi).catch(()=>{});
+    startVoiceAt(guitarInstr, midi, ac.currentTime, vel, 240).catch(()=>{});
+  }
+
+  let guitarRhythmOn = false;
+  let rhythmTimer = null;
+  let nextRhythmTime = 0;
+  let rhythmStep = 0;
+
+  function bpm(){ return parseInt($("bpm").value, 10) || 100; }
+  function timeSig(){ return $("timeSig").value; }
+  function stepsPerBar(){ return timeSig() === "4/4" ? 8 : 6; }
+  function secondsPerStep(){
+    const b = bpm();
+    return timeSig() === "6/8" ? (60 / b) / 3 : (60 / b) / 2;
+  }
+
+  function currentPatternName(){ return $("rhythmPattern").value; }
+  function currentPattern(){
+    const name = currentPatternName();
+    const pat = RHYTHM_PATTERNS.find(p => p[0] === name) || RHYTHM_PATTERNS[0];
+    return pat[1][timeSig()];
+  }
+  function isChopPattern(){
+    return currentPatternName().includes("D . U U . U D");
+  }
+
+  async function scheduleStrumAt(t, dir, intensity){
+    const down = dir === "D";
+    const order = strumOrder(down);
+
+    const delayMs = parseInt($("strumSpeed").value, 10) || 28;
+    const hum = parseInt($("humanize").value, 10) || 0;
+    const randMs = (scale) => (hum <= 0 ? 0 : (Math.random()*2 - 1) * hum * scale);
+
+    loadSoundfontJS(guitarInstr).catch(()=>{});
+
+    for (let i=0;i<order.length;i++){
+      const si = order[i];
+      const f = selectedFret[si];
+      if (f === -1) continue;
+
+      const midi = strings[si].midi + capo + f;
+      loadBufferForInstrMidi(guitarInstr, midi).catch(()=>{});
+
+      const dt = (i * delayMs) + randMs(0.35);
+      const vel = Math.max(0.22, Math.min(1.0, intensity + (Math.random()*2-1) * (hum/220)));
+      const when = t + (dt/1000);
+
+      startVoiceAt(guitarInstr, midi, when, vel, 240).catch(()=>{});
+    }
+  }
+
+  function startGuitarRhythm(){
+    if (!ac){ setStatus("اول صدا را فعال کن."); return; }
+    if (guitarRhythmOn) return;
+
+    guitarRhythmOn = true;
+    $("btnRhythm").classList.add("on");
+
+    rhythmStep = 0;
+    nextRhythmTime = ac.currentTime + 0.08;
+
+    rhythmTimer = setInterval(() => {
+      const ahead = 0.18;
+      while (nextRhythmTime < ac.currentTime + ahead){
+        const pat = currentPattern();
+        const stepChar = pat[rhythmStep] || ".";
+        const ts = timeSig();
+
+        let intensity = 0.82;
+        if (rhythmStep === 0) intensity = 1.0;
+        if (ts === "6/8" && rhythmStep === 3) intensity = 0.9;
+
+        if (stepChar === "D" || stepChar === "U"){
+          scheduleStrumAt(nextRhythmTime, stepChar, intensity);
+        } else if (stepChar === "." && isChopPattern()){
+          playChuck(nextRhythmTime, intensity);
+        }
+
+        rhythmStep++;
+        if (rhythmStep >= stepsPerBar()) rhythmStep = 0;
+        nextRhythmTime += secondsPerStep();
+      }
+    }, 25);
+
+    setStatus(`ریتم گیتار روشن: ${timeSig()} • BPM=${bpm()}`);
+  }
+
+  function stopGuitarRhythm(){
+    guitarRhythmOn = false;
+    $("btnRhythm").classList.remove("on");
+    if (rhythmTimer) clearInterval(rhythmTimer);
+    rhythmTimer = null;
+    setStatus("ریتم گیتار خاموش.");
+  }
+
+  function toggleGuitarRhythm(){
+    if (!ac){ setStatus("اول صدا را فعال کن."); return; }
+    if (guitarRhythmOn) stopGuitarRhythm();
+    else startGuitarRhythm();
+  }
+
+  function restartRhythmIfOn(){
+    if (!guitarRhythmOn) return;
+    stopGuitarRhythm();
+    startGuitarRhythm();
+  }
+
+  // Fill rhythm pattern select
+  const rpSel = $("rhythmPattern");
+  RHYTHM_PATTERNS.forEach(([name], i) => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    if (i === 0) opt.selected = true;
+    rpSel.appendChild(opt);
+  });
+
+  // Fretboard interactions
+  fretboardEl.addEventListener("click", async (e) => {
+    const tag = e.target.closest(".stringTag");
+    if (tag){
+      if (!ac) return;
+      const si = parseInt(tag.dataset.si, 10);
+      selectedFret[si] = (selectedFret[si] === -1) ? 0 : -1;
+      buildFretboard();
+      return;
+    }
+    const cell = e.target.closest(".cell[data-si][data-fret]");
+    if (!cell || !ac) return;
+    const si = parseInt(cell.dataset.si,10);
+    const f  = parseInt(cell.dataset.fret,10);
+    selectedFret[si] = f;
+    buildFretboard();
+    await pluckString(si, 0.95);
+  });
+
+  // Tabs
+  function setTab(tab){
+    currentTab = tab;
+    $("tabPiano").classList.toggle("active", tab === "piano");
+    $("tabGuitar").classList.toggle("active", tab === "guitar");
+    $("panelPiano").classList.toggle("active", tab === "piano");
+    $("panelGuitar").classList.toggle("active", tab === "guitar");
+    updateInfo();
+  }
+  $("tabPiano").addEventListener("click", () => setTab("piano"));
+  $("tabGuitar").addEventListener("click", () => setTab("guitar"));
+
+  // Controls
+  $("btnStart").addEventListener("click", async () => {
+    try{
+      ensureAudio();
+      if (ac.state === "suspended") await ac.resume();
+      loadSoundfontJS(guitarInstr).catch(()=>{});
+
+      refreshPianoLegends();
+      requestAnimationFrame(layoutPianoBlacks);
+      buildFretboard();
+      renderChordButtons();
+
+      setStatus("صدا فعاله ✅ (PWA آماده نصب)");
+      updateInfo();
+    } catch {
+      setStatus("فعال‌سازی صدا ناموفق بود. دوباره کلیک کن.");
+    }
+  });
+
+  $("vol").addEventListener("input", () => {
+    if (!ac) return;
+    master.gain.value = parseFloat($("vol").value);
+  });
+
+  $("zoom").addEventListener("input", () => {
+    const z = parseFloat($("zoom").value);
+    document.documentElement.style.setProperty("--white-w", (34 * z) + "px");
+    document.documentElement.style.setProperty("--white-h", (260 * z) + "px");
+    document.documentElement.style.setProperty("--black-w", (22 * z) + "px");
+    document.documentElement.style.setProperty("--black-h", (165 * z) + "px");
+    requestAnimationFrame(layoutPianoBlacks);
+  });
+
+  $("oct").addEventListener("change", () => {
+    refreshPianoLegends();
+    scrollToKeyboardOct();
+    updateInfo();
+  });
+
+  // transpose
+  const transSel = $("transpose");
+  for (let t=-12; t<=12; t++){
+    const opt = document.createElement("option");
+    opt.value = String(t);
+    opt.textContent = (t>=0?`+${t}`:`${t}`);
+    if (t===0) opt.selected = true;
+    transSel.appendChild(opt);
+  }
+  transSel.addEventListener("change", () => {
+    transpose = parseInt(transSel.value, 10) || 0;
+    updateInfo();
+  });
+
+  $("btnSustain").addEventListener("click", () => {
+    sustain = !sustain;
+    $("btnSustain").classList.toggle("on", sustain);
+  });
+
+  $("btnLabels").addEventListener("click", () => {
+    showNoteLabels = !showNoteLabels;
+    $("btnLabels").classList.toggle("on", showNoteLabels);
+    refreshPianoLegends();
+    buildFretboard();
+  });
+
+  $("btnKeyLabels").addEventListener("click", () => {
+    showKeyLabels = !showKeyLabels;
+    $("btnKeyLabels").classList.toggle("on", showKeyLabels);
+    refreshPianoLegends();
+  });
+
+  $("btnFullscreen").addEventListener("click", async () => {
+    try{
+      if (!document.fullscreenElement){
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {}
+  });
+
+  $("btnPanic").addEventListener("click", () => {
+    stopGuitarRhythm();
+    setStatus("Panic ✅");
+  });
+
+  $("btnStrum").addEventListener("click", () => manualStrum(true));
+  $("btnStrumUp").addEventListener("click", () => manualStrum(false));
+  $("btnRhythm").addEventListener("click", () => toggleGuitarRhythm());
+
+  $("timeSig").addEventListener("change", restartRhythmIfOn);
+  $("rhythmPattern").addEventListener("change", restartRhythmIfOn);
+  $("bpm").addEventListener("input", () => { updateInfo(); restartRhythmIfOn(); });
+
+  $("btnClearChord").addEventListener("click", () => {
+    activeChordName = null;
+    for (let i=0;i<selectedFret.length;i++) selectedFret[i] = 0;
+    renderChordButtons();
+    buildFretboard();
+    setStatus("گیتار پاک شد (همه Open).");
+  });
+
+  giSel.addEventListener("change", () => {
+    guitarInstr = giSel.value;
+    if (ac) loadSoundfontJS(guitarInstr).catch(()=>{});
+    setStatus(`نوع گیتار: ${giSel.options[giSel.selectedIndex].text}`);
+  });
+
+  capoSel.addEventListener("change", () => {
+    capo = parseInt(capoSel.value,10) || 0;
+    buildFretboard();
+    setStatus(`Capo = ${capo}`);
+  });
+
+  // Keyboard: guitar 1..6 pluck
+  function keyToStringIndex(k){
+    if (k < "1" || k > "6") return null;
+    const n = parseInt(k,10);
+    return 6 - n;
+  }
+  window.addEventListener("keydown", async (e) => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "select" || tag === "textarea") return;
+    const k = e.key.toLowerCase();
+    const si = keyToStringIndex(k);
+    if (si !== null){
+      if (!ac) return;
+      await pluckString(si, 0.95);
+    }
+  });
+
+  // init
+  refreshPianoLegends();
+  requestAnimationFrame(layoutPianoBlacks);
+  buildFretboard();
+  renderChordButtons();
+  updateInfo();
+})();
+</script>
+</body>
+</html>
